@@ -40,20 +40,24 @@ export default function Home() {
 
   return (
     <main className="wrap">
-      <div className="card">
+      <div className="hero">
+        <div className="logo">JLB</div>
         <h1>Pendaftaran Keahlian JLB</h1>
+        <p>Sertai kami dengan mengisi borang di bawah</p>
+      </div>
+      <div className="card">
         <form onSubmit={handleSubmit}>
-          <label htmlFor="full_name">Nama Penuh *</label>
-          <input id="full_name" name="full_name" required />
+          <label htmlFor="full_name">Nama Penuh <span className="req">*</span></label>
+          <input id="full_name" name="full_name" placeholder="Contoh: Ahmad bin Ali" required />
 
-          <label htmlFor="phone_number">Nombor Telefon *</label>
-          <input id="phone_number" name="phone_number" type="tel" required />
+          <label htmlFor="phone_number">Nombor Telefon <span className="req">*</span></label>
+          <input id="phone_number" name="phone_number" type="tel" placeholder="Contoh: 0123456789" required />
 
           <label htmlFor="email">Email</label>
-          <input id="email" name="email" type="email" />
+          <input id="email" name="email" type="email" placeholder="nama@email.com (pilihan)" />
 
           <label htmlFor="address">Alamat</label>
-          <textarea id="address" name="address" rows={3} />
+          <textarea id="address" name="address" rows={3} placeholder="Alamat (pilihan)" />
 
           <button type="submit" disabled={loading}>
             {loading ? 'Menghantar...' : 'Daftar'}
@@ -62,10 +66,9 @@ export default function Home() {
         {result && (
           <div className={`msg ${result.ok ? 'ok' : 'err'}`}>{result.text}</div>
         )}
-        <p style={{ marginTop: 16, fontSize: '.9rem' }}>
-          Sudah mendaftar? <a href="/status">Semak status keahlian</a>
-        </p>
+        <p className="links">Sudah mendaftar? <a href="/status">Semak status keahlian</a></p>
       </div>
+      <p className="foot">© JLB</p>
     </main>
   );
 }

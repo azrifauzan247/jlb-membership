@@ -34,20 +34,23 @@ export default function StatusPage() {
 
   return (
     <main className="wrap">
-      <div className="card">
+      <div className="hero">
+        <div className="logo">JLB</div>
         <h1>Semak Status Keahlian</h1>
+        <p>Masukkan nama penuh untuk melihat status anda</p>
+      </div>
+      <div className="card">
         <form onSubmit={handleSubmit}>
-          <label htmlFor="full_name">Nama Penuh *</label>
-          <input id="full_name" name="full_name" required />
+          <label htmlFor="full_name">Nama Penuh <span className="req">*</span></label>
+          <input id="full_name" name="full_name" placeholder="Seperti yang didaftarkan" required />
           <button type="submit" disabled={loading}>
             {loading ? 'Menyemak...' : 'Semak'}
           </button>
         </form>
         {result && <div className={`msg ${result.ok ? 'ok' : 'err'}`}>{result.text}</div>}
-        <p style={{ marginTop: 16, fontSize: '.9rem' }}>
-          <a href="/">← Kembali ke pendaftaran</a>
-        </p>
+        <p className="links"><a href="/">← Kembali ke pendaftaran</a></p>
       </div>
+      <p className="foot">© JLB</p>
     </main>
   );
 }
