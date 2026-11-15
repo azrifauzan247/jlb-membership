@@ -62,6 +62,9 @@ export default function Home() {
         {result && (
           <div className={`msg ${result.ok ? 'ok' : 'err'}`}>{result.text}</div>
         )}
+        <p style={{ marginTop: 16, fontSize: '.9rem' }}>
+          Sudah mendaftar? <a href="/status">Semak status keahlian</a>
+        </p>
       </div>
     </main>
   );
