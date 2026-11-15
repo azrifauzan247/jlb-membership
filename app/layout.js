@@ -2,6 +2,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'Pendaftaran Keahlian JLB',
+  icons: { icon: '/logo.jpg' },
   description: 'Borang pendaftaran keahlian JLB',
 };
 

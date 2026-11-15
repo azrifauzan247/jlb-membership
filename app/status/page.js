@@ -35,7 +35,7 @@ export default function StatusPage() {
   return (
     <main className="wrap">
       <div className="hero">
-        <div className="logo">JLB</div>
+        <img className="logo" src="/logo.jpg" alt="Logo JLB - Jadi Lebih Baik" />
         <h1>Semak Status Keahlian</h1>
         <p>Masukkan nama penuh untuk melihat status anda</p>
       </div>

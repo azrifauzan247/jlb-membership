@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <main className="wrap">
       <div className="hero">
-        <div className="logo">JLB</div>
+        <img className="logo" src="/logo.jpg" alt="Logo JLB - Jadi Lebih Baik" />
         <h1>Pendaftaran Keahlian JLB</h1>
         <p>Sertai kami dengan mengisi borang di bawah</p>
       </div>
