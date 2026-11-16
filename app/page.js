@@ -66,7 +66,7 @@ export default function Home() {
         {result && (
           <div className={`msg ${result.ok ? 'ok' : 'err'}`}>{result.text}</div>
         )}
-        <p className="links">Sudah mendaftar? <a href="/status">Semak status keahlian</a></p>
+        <p className="links">Sudah mendaftar? <a href="/status">Semak status</a> · <a href="/kemaskini">Kemaskini maklumat</a></p>
       </div>
       <p className="foot">© JLB</p>
     </main>

@@ -48,7 +48,7 @@ export default function StatusPage() {
           </button>
         </form>
         {result && <div className={`msg ${result.ok ? 'ok' : 'err'}`}>{result.text}</div>}
-        <p className="links"><a href="/">← Kembali ke pendaftaran</a></p>
+        <p className="links"><a href="/kemaskini">Kemaskini maklumat</a> · <a href="/">← Pendaftaran</a></p>
       </div>
       <p className="foot">© JLB</p>
     </main>
