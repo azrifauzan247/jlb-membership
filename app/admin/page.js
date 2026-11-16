@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -73,6 +74,29 @@ export default function AdminPage() {
       setError('Gagal mengemas kini status.');
     } else {
       setMembers((ms) => ms.map((m) => (m.id === id ? { ...m, membership_status: status } : m)));
+      setNotice('');
+      if (status === 'approved' || status === 'rejected') await notifyMember(id, status);
+    }
+  }
+
+  async function notifyMember(id, status) {
+    const NOTES = {
+      no_email: 'Status dikemas kini. Ahli ini tiada emel, jadi tiada notifikasi dihantar.',
+      not_configured: 'Status dikemas kini, tetapi emel belum dikonfigurasi di Vercel.',
+      send_failed: 'Status dikemas kini, tetapi emel gagal dihantar.',
+    };
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ memberId: id, status }),
+      });
+      const out = await res.json();
+      if (out.sent) setNotice('Status dikemas kini dan emel notifikasi telah dihantar kepada ahli.');
+      else setNotice(NOTES[out.reason] || 'Status dikemas kini, tetapi emel tidak dapat dihantar.');
+    } catch (e) {
+      console.error(e);
+      setNotice('Status dikemas kini, tetapi emel tidak dapat dihantar.');
     }
   }
 
@@ -148,6 +172,7 @@ export default function AdminPage() {
       </div>
 
       {error && <div className="msg err">{error}</div>}
+      {notice && <div className="msg ok">{notice}</div>}
       {isAdmin === null && <p className="foot">Memuatkan...</p>}
       {isAdmin && visible.length === 0 && <div className="card empty">Tiada rekod dalam kategori ini.</div>}
 
