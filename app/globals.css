@@ -59,3 +59,28 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .links a:hover { text-decoration: underline; }
 .foot { text-align: center; margin-top: 20px; font-size: .8rem; color: var(--muted); }
 @media (max-width: 480px) { .card { padding: 22px 18px; } .hero h1 { font-size: 1.45rem; } }
+
+/* ===== Panel admin ===== */
+.wrap.wide { max-width: 720px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: #fff; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 2px solid var(--gold); }
+button.ghost { margin: 0; width: auto; padding: 8px 14px; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.4); box-shadow: none; font-size: .85rem; }
+button.ghost.dark { background: #fff; color: var(--ink); border-color: #cbd5e1; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+button.tab { margin: 0; width: auto; padding: 8px 14px; background: rgba(255,255,255,.85); color: var(--ink); box-shadow: none; font-size: .85rem; font-weight: 600; border-radius: 999px; }
+button.tab.active { background: var(--gold); color: #fff; }
+.count { margin-left: 6px; background: rgba(0,0,0,.12); border-radius: 999px; padding: 1px 8px; font-size: .78rem; }
+.member { margin-bottom: 12px; padding: 18px; }
+.member-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.detail { font-size: .92rem; margin: 4px 0; word-break: break-word; }
+.detail.small { color: var(--muted); font-size: .8rem; margin-top: 8px; }
+.badge { padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+.badge.pending { background: #fef3c7; color: #92400e; }
+.badge.approved { background: #eef1e6; color: #3f4a2c; }
+.badge.rejected { background: #fee2e2; color: #991b1b; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.actions button { margin: 0; width: auto; padding: 9px 18px; font-size: .9rem; }
+button.approve { background: linear-gradient(135deg, #7c8760, #5f684b); }
+button.reject { background: linear-gradient(135deg, #dc2626, #991b1b); box-shadow: 0 4px 12px rgba(153,27,27,.3); }
+.empty { text-align: center; color: var(--muted); }
