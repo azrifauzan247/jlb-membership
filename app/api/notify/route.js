@@ -60,17 +60,18 @@ export async function POST(request) {
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
-      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+      auth: { user: process.env.GMAIL_USER.trim(), pass: process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') },
     });
     const mail = buildMail(member.full_name, status);
     await transporter.sendMail({
-      from: `"JLB - Jadi Lebih Baik" <${process.env.GMAIL_USER}>`,
+      from: `"JLB - Jadi Lebih Baik" <${process.env.GMAIL_USER.trim()}>`,
       to: member.email,
       ...mail,
     });
     return Response.json({ sent: true });
   } catch (e) {
-    console.error('Gagal hantar emel:', e);
-    return Response.json({ sent: false, reason: 'send_failed' });
+    console.error('Gagal hantar emel:', e.code, e.responseCode, e.message);
+    const reason = e.code === 'EAUTH' ? 'auth_failed' : e.code === 'EENVELOPE' ? 'bad_recipient' : 'send_failed';
+    return Response.json({ sent: false, reason });
   }
 }

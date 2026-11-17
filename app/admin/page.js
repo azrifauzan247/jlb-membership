@@ -83,7 +83,9 @@ export default function AdminPage() {
     const NOTES = {
       no_email: 'Status dikemas kini. Ahli ini tiada emel, jadi tiada notifikasi dihantar.',
       not_configured: 'Status dikemas kini, tetapi emel belum dikonfigurasi di Vercel.',
-      send_failed: 'Status dikemas kini, tetapi emel gagal dihantar.',
+      send_failed: 'Status dikemas kini, tetapi emel gagal dihantar. Semak log di Vercel.',
+      auth_failed: 'Status dikemas kini, tetapi Gmail menolak log masuk. Semak GMAIL_USER dan GMAIL_APP_PASSWORD di Vercel.',
+      bad_recipient: 'Status dikemas kini, tetapi alamat emel ahli ini tidak sah.',
     };
     try {
       const res = await fetch('/api/notify', {
@@ -93,7 +95,7 @@ export default function AdminPage() {
       });
       const out = await res.json();
       if (out.sent) setNotice('Status dikemas kini dan emel notifikasi telah dihantar kepada ahli.');
-      else setNotice(NOTES[out.reason] || 'Status dikemas kini, tetapi emel tidak dapat dihantar.');
+      else setNotice(NOTES[out.reason] || `Status dikemas kini, tetapi emel tidak dapat dihantar (${out.error || 'ralat'}).`);
     } catch (e) {
       console.error(e);
       setNotice('Status dikemas kini, tetapi emel tidak dapat dihantar.');
