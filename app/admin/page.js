@@ -21,6 +21,7 @@ export default function AdminPage() {
   const [loginBusy, setLoginBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -32,7 +33,7 @@ export default function AdminPage() {
     setError('');
     const { data, error } = await supabase
       .from(TABLE_NAME)
-      .select('*')
+      .select('id, full_name, phone_number, email, address, membership_status, created_at')
       .order('created_at', { ascending: false });
     if (error) {
       console.error(error);
@@ -106,7 +107,67 @@ export default function AdminPage() {
     acc[m.membership_status] = (acc[m.membership_status] || 0) + 1;
     return acc;
   }, {});
-  const visible = filter === 'all' ? members : members.filter((m) => m.membership_status === filter);
+  const q = query.trim().toLowerCase();
+  const visible = members
+    .filter((m) => filter === 'all' || m.membership_status === filter)
+    .filter(
+      (m) =>
+        !q ||
+        [m.full_name, m.phone_number, m.email].some((v) => (v || '').toLowerCase().includes(q))
+    );
+
+  // ---- Eksport CSV (ikut tab dan carian semasa) ----
+  function csvCell(v) {
+    let t = v == null ? '' : String(v);
+    // Elak formula Excel (=, @, -, +) kecuali nombor telefon biasa
+    if (/^[=+\-@\t\r]/.test(t) && !/^\+?[0-9][0-9\s-]*$/.test(t)) t = "'" + t;
+    return '"' + t.replace(/"/g, '""') + '"';
+  }
+  function exportCsv() {
+    const header = ['Nama Penuh', 'Nombor Telefon', 'Email', 'Alamat', 'Status', 'Tarikh Daftar'];
+    const rows = visible.map((m) => [
+      m.full_name,
+      m.phone_number,
+      m.email,
+      m.address,
+      STATUS_LABEL[m.membership_status] || m.membership_status,
+      new Date(m.created_at).toLocaleString('ms-MY'),
+    ]);
+    const csv = [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `jlb-ahli-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- Jana PIN baharu ----
+  async function resetPin(m) {
+    if (!window.confirm(`Jana PIN baharu untuk ${m.full_name}? PIN lama tidak akan berfungsi lagi.`)) return;
+    setBusyId(m.id);
+    setError('');
+    try {
+      const res = await fetch('/api/reset-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ memberId: m.id }),
+      });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out.error || 'gagal');
+      setNotice(
+        `PIN baharu untuk ${out.name}: ${out.pin}. ` +
+          (out.emailSent
+            ? 'Juga dihantar ke emel ahli.'
+            : 'Emel tidak dihantar (tiada emel atau gagal), sila maklumkan PIN ini kepada ahli.')
+      );
+    } catch (e) {
+      console.error(e);
+      setError('Gagal menjana PIN. Pastikan SQL PIN telah dijalankan di Supabase.');
+    }
+    setBusyId(null);
+  }
 
   // 1. Sedang semak sesi
   if (session === undefined) {
@@ -173,8 +234,21 @@ export default function AdminPage() {
         ))}
       </div>
 
+      <div className="toolbar">
+        <input
+          type="search"
+          placeholder="Cari nama, telefon atau emel..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Carian ahli"
+        />
+        <button type="button" className="ghost" onClick={exportCsv} disabled={visible.length === 0}>
+          Muat turun CSV ({visible.length})
+        </button>
+      </div>
+
       {error && <div className="msg err">{error}</div>}
-      {notice && <div className="msg ok">{notice}</div>}
+      {notice && <div className="msg ok" style={{ wordBreak: "break-word" }}>{notice}</div>}
       {isAdmin === null && <p className="foot">Memuatkan...</p>}
       {isAdmin && visible.length === 0 && <div className="card empty">Tiada rekod dalam kategori ini.</div>}
 
@@ -208,6 +282,9 @@ export default function AdminPage() {
                 Set Menunggu
               </button>
             )}
+            <button className="pinbtn" disabled={busyId === m.id} onClick={() => resetPin(m)}>
+              Jana PIN
+            </button>
           </div>
         </div>
       ))}

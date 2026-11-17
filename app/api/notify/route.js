@@ -1,10 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { sendMail, esc } from '../../lib/mailer';
 
 export const runtime = 'nodejs';
-
-const esc = (s) =>
-  String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function buildMail(name, status) {
   if (status === 'approved') {
@@ -49,29 +46,9 @@ export async function POST(request) {
     .single();
   if (error || !member) return Response.json({ error: 'not_found' }, { status: 404 });
 
-  // Hantar hanya jika status semasa sepadan dengan yang diminta
   if (member.membership_status !== status) return Response.json({ error: 'status_mismatch' }, { status: 409 });
   if (!member.email) return Response.json({ sent: false, reason: 'no_email' });
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    return Response.json({ sent: false, reason: 'not_configured' });
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.GMAIL_USER.trim(), pass: process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') },
-    });
-    const mail = buildMail(member.full_name, status);
-    await transporter.sendMail({
-      from: `"JLB - Jadi Lebih Baik" <${process.env.GMAIL_USER.trim()}>`,
-      to: member.email,
-      ...mail,
-    });
-    return Response.json({ sent: true });
-  } catch (e) {
-    console.error('Gagal hantar emel:', e.code, e.responseCode, e.message);
-    const reason = e.code === 'EAUTH' ? 'auth_failed' : e.code === 'EENVELOPE' ? 'bad_recipient' : 'send_failed';
-    return Response.json({ sent: false, reason });
-  }
+  const result = await sendMail({ to: member.email, ...buildMail(member.full_name, status) });
+  return Response.json(result);
 }

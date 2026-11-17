@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { supabase } from '../supabase';
 
 const STATUS_LABEL = { pending: 'Menunggu kelulusan', approved: 'Diluluskan', rejected: 'Ditolak' };
+const AUTH_ERRORS = {
+  bad: 'Nombor telefon atau PIN salah.',
+  locked: 'Terlalu banyak percubaan salah. Sila cuba lagi selepas 15 minit, atau hubungi admin.',
+};
 
 export default function KemaskiniPage() {
-  // identiti yang disahkan (nama + telefon asal)
-  const [identity, setIdentity] = useState(null);
+  const [identity, setIdentity] = useState(null); // { phone, pin } yang telah disahkan
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -15,22 +18,22 @@ export default function KemaskiniPage() {
   async function handleVerify(e) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const name = f.get('name').trim();
     const phone = f.get('phone').trim();
+    const pin = f.get('pin').trim();
     setLoading(true);
     setResult(null);
 
-    const { data, error } = await supabase.rpc('get_my_registration', { p_name: name, p_phone: phone });
+    const { data, error } = await supabase.rpc('get_my_registration', { p_phone: phone, p_pin: pin });
     setLoading(false);
 
     if (error) {
       console.error(error);
       setResult({ ok: false, text: 'Semakan gagal. Sila cuba lagi.' });
-    } else if (!data || data.length === 0) {
-      setResult({ ok: false, text: 'Maklumat tidak ditemui. Pastikan nama penuh dan nombor telefon sama seperti semasa mendaftar.' });
+    } else if (data?.result === 'ok') {
+      setIdentity({ phone, pin });
+      setRecord(data.data);
     } else {
-      setIdentity({ name, phone });
-      setRecord(data[0]);
+      setResult({ ok: false, text: AUTH_ERRORS[data?.result] || 'Semakan gagal.' });
     }
   }
 
@@ -47,8 +50,8 @@ export default function KemaskiniPage() {
     setResult(null);
 
     const { data, error } = await supabase.rpc('update_my_registration', {
-      p_name: identity.name,
       p_phone: identity.phone,
+      p_pin: identity.pin,
       n_name: next.full_name,
       n_phone: next.phone_number,
       n_email: next.email,
@@ -57,17 +60,16 @@ export default function KemaskiniPage() {
     setLoading(false);
 
     const messages = {
-      not_found: 'Rekod tidak ditemui. Sila sahkan semula identiti anda.',
-      multiple: 'Ada lebih daripada satu rekod sepadan. Sila hubungi admin.',
+      ...AUTH_ERRORS,
       phone_taken: 'Nombor telefon baru itu sudah digunakan oleh ahli lain.',
-      invalid: 'Nama penuh dan nombor telefon wajib diisi.',
+      missing: 'Nama penuh dan nombor telefon wajib diisi.',
     };
 
     if (error) {
       console.error(error);
       setResult({ ok: false, text: 'Kemaskini gagal. Sila cuba lagi.' });
     } else if (data === 'ok') {
-      setIdentity({ name: next.full_name, phone: next.phone_number });
+      setIdentity({ phone: next.phone_number, pin: identity.pin });
       setRecord({ ...record, ...next, email: next.email || null, address: next.address || null });
       setResult({ ok: true, text: 'Maklumat anda berjaya dikemas kini.' });
     } else {
@@ -86,17 +88,21 @@ export default function KemaskiniPage() {
       <div className="hero">
         <img className="logo" src="/logo.jpg" alt="Logo JLB - Jadi Lebih Baik" />
         <h1>Kemaskini Maklumat</h1>
-        <p>{record ? 'Ubah maklumat anda dan simpan' : 'Sahkan identiti anda dahulu'}</p>
+        <p>{record ? 'Ubah maklumat anda dan simpan' : 'Masukkan nombor telefon dan PIN anda'}</p>
       </div>
 
       <div className="card">
         {!record ? (
           <form onSubmit={handleVerify}>
-            <label htmlFor="name">Nama Penuh <span className="req">*</span></label>
-            <input id="name" name="name" placeholder="Seperti semasa mendaftar" required />
             <label htmlFor="phone">Nombor Telefon <span className="req">*</span></label>
             <input id="phone" name="phone" type="tel" placeholder="Seperti semasa mendaftar" required />
+            <label htmlFor="pin">PIN (6 digit) <span className="req">*</span></label>
+            <input id="pin" name="pin" type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6}
+              placeholder="••••••" autoComplete="one-time-code" required />
             <button type="submit" disabled={loading}>{loading ? 'Menyemak...' : 'Teruskan'}</button>
+            <p className="detail small" style={{ textAlign: 'center' }}>
+              Lupa PIN atau belum ada PIN? Sila hubungi admin untuk mendapatkan PIN baharu.
+            </p>
           </form>
         ) : (
           <form onSubmit={handleUpdate} key={`${record.full_name}|${record.phone_number}`}>
@@ -104,16 +110,16 @@ export default function KemaskiniPage() {
               Status keahlian: <strong>{STATUS_LABEL[record.membership_status] || record.membership_status}</strong>
             </div>
             <label htmlFor="full_name">Nama Penuh <span className="req">*</span></label>
-            <input id="full_name" name="full_name" defaultValue={record.full_name} required />
+            <input id="full_name" name="full_name" defaultValue={record.full_name} required maxLength={120} />
             <label htmlFor="phone_number">Nombor Telefon <span className="req">*</span></label>
-            <input id="phone_number" name="phone_number" type="tel" defaultValue={record.phone_number} required />
+            <input id="phone_number" name="phone_number" type="tel" defaultValue={record.phone_number} required maxLength={20} />
             <label htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" defaultValue={record.email || ''} />
+            <input id="email" name="email" type="email" defaultValue={record.email || ''} maxLength={254} />
             <label htmlFor="address">Alamat</label>
-            <textarea id="address" name="address" rows={3} defaultValue={record.address || ''} />
+            <textarea id="address" name="address" rows={3} defaultValue={record.address || ''} maxLength={300} />
             <button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
             <button type="button" className="ghost dark" style={{ width: '100%', marginTop: 10 }} onClick={reset}>
-              Selesai / Tukar akaun
+              Selesai
             </button>
           </form>
         )}
